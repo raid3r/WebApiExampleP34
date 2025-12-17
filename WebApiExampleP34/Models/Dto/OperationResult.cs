@@ -1,6 +1,6 @@
 ﻿using Swashbuckle.AspNetCore.Annotations;
 
-namespace WebApiExampleP34.Models.Dto;
+namespace WebApiExampleP34.Models.DTO;
 
 public class OperationResult
 {

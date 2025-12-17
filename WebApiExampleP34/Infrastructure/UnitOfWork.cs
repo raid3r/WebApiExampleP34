@@ -7,11 +7,11 @@ namespace WebApiExampleP34.Infrastructure;
 
 public class UnitOfWork(TodoListContext context): IUnitOfWork
 {
-    private Lazy<ITodoItemRepository> _todoItems = new Lazy<ITodoItemRepository>(() => new TodoItemRepository(context));
+    private readonly Lazy<ITodoItemRepository> _todoItems = new(() => new TodoItemRepository(context));
 
     public ITodoItemRepository TodoItems => _todoItems.Value;
 
-    public async Task SaveChangexAsync()
+    public async Task SaveChangesAsync()
     {
         await context.SaveChangesAsync();
     }

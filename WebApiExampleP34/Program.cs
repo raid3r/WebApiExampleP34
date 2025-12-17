@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using WebApiExampleP34.Application;
+using WebApiExampleP34.Application.Services;
 using WebApiExampleP34.Infrastructure;
+using WebApiExampleP34.Infrastructure.Services;
 using WebApiExampleP34.Models.DAL;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +28,7 @@ builder.Services.AddDbContext<TodoListContext>(options =>
 });
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ITodoItemService, TodoItemService>();
 
 
 var app = builder.Build();

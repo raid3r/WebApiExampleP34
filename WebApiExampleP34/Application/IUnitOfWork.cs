@@ -4,7 +4,7 @@ namespace WebApiExampleP34.Application;
 
 public interface IUnitOfWork: IDisposable
 {
-    Task SaveChangexAsync();
+    Task SaveChangesAsync();
 
-    public ITodoItemRepository TodoItems { get; }
+    ITodoItemRepository TodoItems { get; }
 }

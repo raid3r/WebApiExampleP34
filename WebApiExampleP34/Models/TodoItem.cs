@@ -1,4 +1,6 @@
-﻿namespace WebApiExampleP34.Models;
+﻿using WebApiExampleP34.Models.Constants;
+
+namespace WebApiExampleP34.Models;
 
 /// <summary>
 /// Represents a to-do item with a title, description, completion status, and creation date.
@@ -17,5 +19,7 @@ public class TodoItem
     public string Title { get; set; }
     public bool IsCompleted { get; set; }
     public string Description { get; set; }
+    public TodoItemPriority Priority { get; set; }
     public DateTime CreatedDate { get; set; }
+
 }

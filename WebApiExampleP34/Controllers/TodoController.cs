@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Threading.Tasks;
+using WebApiExampleP34.Application;
 using WebApiExampleP34.Models;
 using WebApiExampleP34.Models.Dto;
 
@@ -7,7 +10,7 @@ namespace WebApiExampleP34.Controllers;
 
 [ApiController]
 [Route("api/v1/todo")]
-public class TodoController : ControllerBase
+public class TodoController(IUnitOfWork unitOfWork) : ControllerBase
 {
 
     [HttpGet("list")]
@@ -17,14 +20,9 @@ public class TodoController : ControllerBase
         Tags = new[] { "Todo Operations" }
     )]
     [ProducesResponseType(typeof(IEnumerable<TodoItem>), 200)]
-    public IEnumerable<TodoItem> List()
+    public async Task<IEnumerable<TodoItem>> List()
     {
-        return new List<TodoItem>
-        {
-            new TodoItem { Id = 1, Title = "Buy groceries", IsCompleted = false, Description = "Milk, Bread, Eggs", CreatedDate = DateTime.Now },
-            new TodoItem { Id = 2, Title = "Walk the dog", IsCompleted = true, Description = "Evening walk in the park", CreatedDate = DateTime.Now.AddDays(-1) },
-            new TodoItem { Id = 3, Title = "Read a book", IsCompleted = false, Description = "Finish reading 'The Great Gatsby'", CreatedDate = DateTime.Now.AddDays(-2) }
-        };
+        return await unitOfWork.TodoItems.GetAll().ToListAsync();
     }
 
     [HttpGet("{id}")]
@@ -34,10 +32,16 @@ public class TodoController : ControllerBase
         Tags = new[] { "Todo Operations" }
     )]
     [ProducesResponseType(typeof(TodoItem), 200)]
-    public TodoItem GetById([SwaggerParameter("Id of todo item", Required = true)] int id)
+    [ProducesResponseType(404)]
+    public async Task<TodoItem> GetById([SwaggerParameter("Id of todo item", Required = true)] int id)
     {
-        var todoItem = new TodoItem { Id = id, Title = "Sample Task", IsCompleted = false, Description = "This is a sample task", CreatedDate = DateTime.Now };
-        return todoItem;
+        var item = await unitOfWork.TodoItems.GetByIdAsync(id);
+        if (item == null)
+        {
+            Response.StatusCode = 404;
+            return null!;
+        }
+        return item;
     }
 
     [HttpPost("{id}")]
@@ -48,16 +52,25 @@ public class TodoController : ControllerBase
         Tags = new[] { "Todo Operations" }
     )]
     [ProducesResponseType(typeof(OperationResult), 200)]
-    [ProducesResponseType(typeof(OperationResult), 500)]
-    public OperationResult UpdateById([SwaggerRequestBody("Todo item content")][FromBody] TodoItem item)
+    [ProducesResponseType(typeof(OperationResult), StatusCodes.Status404NotFound)]
+    public async Task<OperationResult> UpdateById([SwaggerRequestBody("Todo item content")][FromBody] TodoItem item)
     {
-        
-        Response.StatusCode = 500;
-        return OperationResult.Fail("An error occurred while updating the item.");
+        var existingItem = await unitOfWork.TodoItems.GetByIdAsync(item.Id);
+        if (existingItem == null)
+        {
+            Response.StatusCode = 404;
+            return OperationResult.Fail("Item not found.");
+        }
 
+        existingItem.Title = item.Title;
+        existingItem.Description = item.Description;
+        existingItem.IsCompleted = item.IsCompleted;
+        existingItem.Priority = item.Priority;
 
-        // валідація та збереження в базу даних
-       //return OperationResult.Ok();
+        await unitOfWork.TodoItems.UpdateAsync(existingItem);
+        await unitOfWork.SaveChangexAsync();
+
+        return OperationResult.Ok();
     }
 
     /// <summary>
@@ -69,9 +82,19 @@ public class TodoController : ControllerBase
         Tags = new[] { "Todo Operations" }
     )]
     [HttpPut("create")]
-    public OperationResult Create([FromBody] TodoItem item)
+    public async Task<OperationResult> Create([FromBody] TodoItem item)
     {
-        // додавання в базу даних
+        var newItem = new TodoItem
+        {
+            Title = item.Title,
+            Description = item.Description,
+            IsCompleted = item.IsCompleted,
+            Priority = item.Priority,
+            CreatedDate = DateTime.UtcNow
+        };
+        await unitOfWork.TodoItems.AddAsync(newItem);
+        await unitOfWork.SaveChangexAsync();
+        
         return OperationResult.Ok();
     }
 
@@ -83,13 +106,22 @@ public class TodoController : ControllerBase
     /// <returns></returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(typeof(OperationResult), 200)]
-    [ProducesResponseType(typeof(OperationResult), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(OperationResult), StatusCodes.Status404NotFound)]
     [SwaggerOperation(
         Tags = new[] { "Todo Operations" }
     )]
-    public OperationResult DeleteById(int id)
+    public async Task<OperationResult> DeleteById(int id)
     {
+        var existingItem = await unitOfWork.TodoItems.GetByIdAsync(id);
+        if (existingItem == null)
+        {
+            Response.StatusCode = 404;
+            return OperationResult.Fail("Item not found.");
+        }
         // видалення з бази даних
+        await unitOfWork.TodoItems.DeleteAsync(id);
+        await unitOfWork.SaveChangexAsync();
+        
         return OperationResult.Ok();
     }
 

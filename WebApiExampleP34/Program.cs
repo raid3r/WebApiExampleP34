@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using WebApiExampleP34.Application;
+using WebApiExampleP34.Infrastructure;
+using WebApiExampleP34.Models.DAL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +19,14 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 
 });
+
+builder.Services.AddDbContext<TodoListContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
 var app = builder.Build();
 

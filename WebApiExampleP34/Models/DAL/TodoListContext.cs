@@ -14,6 +14,7 @@ public class TodoListContext : DbContext
 
     // Визначення DbSet для сутностей
     public DbSet<TodoItem> TodoItems { get; set; }
+    public DbSet<TodoList> TodoLists { get; set; }
 
     // Метод для налаштування моделі та конфігурації бази даних
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

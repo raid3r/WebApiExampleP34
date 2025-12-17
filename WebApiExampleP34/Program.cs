@@ -29,6 +29,8 @@ builder.Services.AddDbContext<TodoListContext>(options =>
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITodoItemService, TodoItemService>();
+builder.Services.AddScoped<ITodoListService, TodoListService>();
+
 
 
 var app = builder.Build();

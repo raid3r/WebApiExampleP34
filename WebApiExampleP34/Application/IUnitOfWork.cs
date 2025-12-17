@@ -7,4 +7,5 @@ public interface IUnitOfWork: IDisposable
     Task SaveChangesAsync();
 
     ITodoItemRepository TodoItems { get; }
+    ITodoListRepository TodoLists { get; }
 }

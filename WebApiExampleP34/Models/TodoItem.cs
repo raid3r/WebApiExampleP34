@@ -22,4 +22,6 @@ public class TodoItem
     public TodoItemPriority Priority { get; set; }
     public DateTime CreatedDate { get; set; }
 
+    public virtual TodoList TodoList { get; set; }
+
 }

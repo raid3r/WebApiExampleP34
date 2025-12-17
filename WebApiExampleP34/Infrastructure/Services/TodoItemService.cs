@@ -8,7 +8,7 @@ using WebApiExampleP34.Models.DTO;
 
 namespace WebApiExampleP34.Infrastructure.Services;
 
-public class TodoItemService(IUnitOfWork unitOfWork): ITodoItemService
+public class TodoItemService(IUnitOfWork unitOfWork) : ITodoItemService
 {
     public async Task<IEnumerable<TodoItemDto>> GetAllAsync()
     {
@@ -73,3 +73,5 @@ public class TodoItemService(IUnitOfWork unitOfWork): ITodoItemService
         await unitOfWork.SaveChangesAsync();
     }
 }
+
+

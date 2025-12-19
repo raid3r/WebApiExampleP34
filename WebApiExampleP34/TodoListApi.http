@@ -1,0 +1,84 @@
+@devServer = http://localhost:5290
+@listId = 1
+
+@npToken= 0c874052d2b267bbe59a27810b9c3235
+
+### https://localhost:7094
+
+### Get lists
+GET {{devServer}}/api/v1/todo-list/list
+Accept: application/json
+
+### Get list by id
+GET {{devServer}}/api/v1/todo-list/{{listId}}
+Accept: application/json
+
+### Search GET 
+###?TitleContains=title
+###&IsCompleted=true
+###&DescriptionContains=descr
+###&Priorities=0
+GET {{devServer}}/api/v1/todo-list/search/{{listId}}?IsCompleted=false
+Accept: application/json
+
+###
+POST {{devServer}}/api/v1/todo-list/{{listId}}/add-item
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Додати авторизацію",
+  "isCompleted": true,
+  "description": "З використанням JWT токенів",
+  "priority": 1
+}
+
+###
+
+GET https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m
+Authorization: Bearer XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+###
+
+GET https://api.novaposhta.ua/v2.0/json
+Content-Type: application/json
+
+{
+  "apiKey": "{{npToken}}",
+  "modelName": "Address",
+  "calledMethod": "getAreas",
+  "methodProperties": {}
+}
+
+
+
+
+###
+POST {{devServer}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "login": "user1@test.com",
+  "password": "1111"
+}
+
+###
+POST {{devServer}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "login": "user1@test.com",
+  "password": "1111"
+}
+
+
+###
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMUB0ZXN0LmNvbSIsIm5hbWUiOiJ1c2VyMUB0ZXN0LmNvbSIsIm5hbWVpZCI6IjEiLCJqdGkiOiJmMGQ1NGJmOS05NGRlLTRmZTgtODczNy0yMjlkOWUwOWZkYTUiLCJlbWFpbCI6InVzZXIxQHRlc3QuY29tIiwibmJmIjoxNzY2MTcxOTU0LCJleHAiOjE3NjYyMTUxNTQsImlhdCI6MTc2NjE3MTk1NH0.XUvHy_VH9osuhW8CYAbWnXpyVW8U8Nc0MC8mcFkgrzA
+###
+
+GET {{devServer}}/api/v1/auth/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMUB0ZXN0LmNvbSIsIm5hbWUiOiJ1c2VyMUB0ZXN0LmNvbSIsIm5hbWVpZCI6IjEiLCJqdGkiOiIyOTViNWVlNi04MDgzLTQ0MDctYjY4Yi04ODM5NDNjMzNkYjgiLCJlbWFpbCI6InVzZXIxQHRlc3QuY29tIiwibmJmIjoxNzY2MTcyMTE2LCJleHAiOjE3NjYyMTUzMTYsImlhdCI6MTc2NjE3MjExNn0.RxygegZwKfQaT5tBB99BLFOBRxGSlwnUjuh3vuN4ncU
+
+

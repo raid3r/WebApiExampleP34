@@ -122,4 +122,11 @@ public class TodoListController(ITodoListService service) : ControllerBase
         }
     }
 
+    // /api/v1/todo-list/search/1?
+    [HttpGet("search/{listId}")]
+    public async Task<IEnumerable<TodoItemDto>> Search(int listId, [FromQuery] TodoItemSearchDto search)
+    {
+        return await service.SearchItemsInListAsync(listId, search);
+    }
+
 }

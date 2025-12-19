@@ -95,5 +95,49 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
         list.Items.Add(todoItem);
         await unitOfWork.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<TodoItemDto>> SearchItemsInListAsync(int listId, TodoItemSearchDto search)
+    {
+        // Створили запит, який отримує всі елементи завдань для певного списку
+        var query = unitOfWork
+            .TodoItems
+            .GetAll()
+            .Include(x => x.TodoList)
+            .Where(x => x.TodoList.Id == listId);
+
+
+        // Динамічно додаємо фільтри до запиту на основі параметрів пошуку
+        if (search.TitleContains is not null)
+        {
+            query = query.Where(x => x.Title.Contains(search.TitleContains));
+        }
+
+        if (search.IsCompleted is not null)
+        {
+            query = query.Where(x => x.IsCompleted == search.IsCompleted);
+        }
+
+        if (search.DescriptionContains is not null)
+        {
+            query = query.Where(x => x.Description.Contains(search.DescriptionContains));
+        }
+
+        if (search.Priorities is not null && search.Priorities.Any())
+        {
+            query = query.Where(x => search.Priorities!.Contains(x.Priority));
+        }
+
+        // Виконуємо запит і проєктуємо результати у DTO
+        return await query
+            .Select(x => new TodoItemDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Description = x.Description,
+                IsCompleted = x.IsCompleted,
+                Priority = x.Priority
+            })
+            .ToListAsync();
+    }
 }
 

@@ -17,4 +17,6 @@ public interface ITodoListService
     public Task DeleteByIdAsync(int id);
 
     public Task AddItemToListAsync(int listId, TodoItemDto itemDto);
+
+    public Task<IEnumerable<TodoItemDto>> SearchItemsInListAsync(int listId, TodoItemSearchDto searchDto);
 }

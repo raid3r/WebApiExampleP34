@@ -1,10 +1,11 @@
 ﻿using Azure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace WebApiExampleP34.Models.DAL;
 
-public class TodoListContext : DbContext
+public class TodoListContext : IdentityDbContext<User, IdentityRole<int>, int>
 {
     // Конструктор за замовченням
     public TodoListContext() : base() { }

@@ -1,0 +1,98 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using WebApiExampleP34.Models;
+using WebApiExampleP34.Models.DTO;
+
+namespace WebApiExampleP34.Controllers;
+
+[Route("api/v1/auth")]
+[ApiController]
+public class AuthController(UserManager<User> userManager, IConfiguration configuration) : ControllerBase
+{
+    // register endpoint
+    [HttpPost("register")]
+    public async Task<AuthResultDto> Register([FromBody] RegisterDto registerDto)
+    {
+        var existingUser = await userManager.FindByNameAsync(registerDto.Login);
+        if (existingUser != null)
+        {
+            return AuthResultDto.Fail("User already exists");
+        }
+
+        var user = new User
+        {
+            UserName = registerDto.Login,
+            Email = registerDto.Login
+        };
+        var result = await userManager.CreateAsync(user, registerDto.Password);
+        if (!result.Succeeded)
+        {
+            return AuthResultDto.Fail(string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        return AuthResultDto.Ok(GenerateJwtToken(user));
+    }
+
+    // login endpoint
+    [HttpPost("login")]
+    public async Task<AuthResultDto> Login([FromBody] LoginDto loginDto)
+    {
+        var user = await userManager.FindByNameAsync(loginDto.Login);
+        if (user == null || !await userManager.CheckPasswordAsync(user, loginDto.Password))
+        {
+            return AuthResultDto.Fail("Invalid login or password");
+        }
+        return AuthResultDto.Ok(GenerateJwtToken(user));
+    }
+
+    [HttpGet("profile")]
+    [Authorize]
+    public UserProfileDto Profile()
+    {
+        return new UserProfileDto         {
+            Id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+            Email = User.FindFirstValue(ClaimTypes.Email)!
+        };
+    }
+
+
+    private string GenerateJwtToken(User user)
+    {
+        var key = Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]!);
+
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(
+            [
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
+                new Claim(JwtRegisteredClaimNames.Name, user.Email!),
+                new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Email, user.Email!)
+            ]),
+            Expires = DateTime.UtcNow.AddHours(12),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature
+                )
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(descriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+
+
+    
+
+}
+
+
+    

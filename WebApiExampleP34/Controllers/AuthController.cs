@@ -55,7 +55,8 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
     [Authorize]
     public UserProfileDto Profile()
     {
-        return new UserProfileDto         {
+        return new UserProfileDto
+        {
             Id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
             Email = User.FindFirstValue(ClaimTypes.Email)!
         };
@@ -66,33 +67,55 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
     {
         var key = Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]!);
 
-        var descriptor = new SecurityTokenDescriptor
+
+        var claims = new List<Claim>
         {
-            Subject = new ClaimsIdentity(
-            [
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
-                new Claim(JwtRegisteredClaimNames.Name, user.Email!),
-                new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Email, user.Email!)
-            ]),
-            Expires = DateTime.UtcNow.AddHours(12),
-            SigningCredentials = new SigningCredentials(
+            new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
+            new Claim(JwtRegisteredClaimNames.Name, user.Email!),
+            new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email!)
+        };
+
+        var token = new JwtSecurityToken
+        (
+            issuer: null,
+            audience: null,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(12),
+            signingCredentials: new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature
                 )
-        };
+        );
+
+        //var descriptor = new SecurityTokenDescriptor
+        //{
+        //    Subject = new ClaimsIdentity(
+        //    [
+        //        new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
+        //        new Claim(JwtRegisteredClaimNames.Name, user.Email!),
+        //        new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
+        //        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        //        new Claim(JwtRegisteredClaimNames.Email, user.Email!)
+        //    ]),
+        //    Expires = DateTime.UtcNow.AddHours(12),
+        //    SigningCredentials = new SigningCredentials(
+        //        new SymmetricSecurityKey(key),
+        //        SecurityAlgorithms.HmacSha256Signature
+        //        )
+        //};
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(descriptor);
+        //var token = tokenHandler.CreateToken(descriptor);
         return tokenHandler.WriteToken(token);
     }
 
 
 
-    
+
 
 }
 
 
-    
+

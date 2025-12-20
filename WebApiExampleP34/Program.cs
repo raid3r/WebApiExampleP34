@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+using System.Text.Json;
 using WebApiExampleP34.Application;
 using WebApiExampleP34.Application.Services;
 using WebApiExampleP34.Infrastructure;
@@ -38,6 +39,16 @@ builder.Services.AddScoped<ITodoListService, TodoListService>();
 
 var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()   // Allow requests from any origin
+               .AllowAnyMethod()   // Allow any HTTP method (GET, POST, PUT, etc.)
+               .AllowAnyHeader();  // Allow any header
+    });
+});
+
 builder.Services
     .AddAuthentication(options =>
 {
@@ -58,16 +69,27 @@ builder.Services
 
         options.Events = new JwtBearerEvents
         {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsync(JsonSerializer.Serialize(new
+                {
+                    error = "Unauthorized",
+                    message = "“окен отсутствует или недействителен."
+                }));
+            },
+            OnForbidden = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            },
             OnAuthenticationFailed = context =>
             {
                 Console.WriteLine("JWT Auth failed: " + context.Exception.Message);
                 return Task.CompletedTask;
             },
-            OnChallenge = context =>
-            {
-                Console.WriteLine("Challenge: " + context.ErrorDescription);
-                return Task.CompletedTask;
-            }
         };
 
     });
@@ -83,11 +105,14 @@ builder.Services.AddIdentityCore<User>(options => {
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 3;
 
+    
+
 })
     .AddRoles<IdentityRole<int>>()
-    .AddEntityFrameworkStores<TodoListContext>();
+    .AddEntityFrameworkStores<TodoListContext>()
+    .AddDefaultTokenProviders();
 
-
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -104,5 +129,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("AllowAll");
 
 app.Run();

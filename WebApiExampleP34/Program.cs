@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json;
 using WebApiExampleP34.Application;
 using WebApiExampleP34.Application.Services;
+using WebApiExampleP34.Application.Swagger;
 using WebApiExampleP34.Infrastructure;
 using WebApiExampleP34.Infrastructure.Services;
 using WebApiExampleP34.Models;
@@ -25,6 +27,35 @@ builder.Services.AddSwaggerGen(options =>
     var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
     options.IncludeXmlComments(xmlPath);
+
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"Введіть JWT-токен",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    // Применяем эту схему глобально ко всем методам
+    //options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    //{
+    //    {
+    //        new OpenApiSecurityScheme
+    //        {
+    //            Reference = new OpenApiReference
+    //            {
+    //                Type = ReferenceType.SecurityScheme,
+    //                Id = "Bearer"
+    //            }
+    //        },
+    //        new string[] { }
+    //    }
+    //});
+
+    options.OperationFilter<AuthorizeCheckOperationFilter>();
 
 });
 
@@ -131,5 +162,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.UseCors("AllowAll");
+
+app.Use(async (context, next) =>
+{
+    
+    if (context.Request.Headers.TryGetValue("X-Auth-Token", out var token))
+    {
+        context.Request.Headers["Authorization"] = $"Bearer {token}";
+    }
+
+    await next();
+});
 
 app.Run();

@@ -60,7 +60,7 @@ POST {{devServer}}/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "login": "user1@test.com",
+  "login": "user2@test.com",
   "password": "1111"
 }
 
@@ -75,7 +75,7 @@ Content-Type: application/json
 
 
 ###
-@token = eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyMUB0ZXN0LmNvbSIsIm5hbWUiOiJ1c2VyMUB0ZXN0LmNvbSIsIm5hbWVpZCI6IjEiLCJqdGkiOiI3NDJjMGNkZS05MGYxLTQ1ODUtODBkZC1lMzM5MjAwNjlkMWQiLCJlbWFpbCI6InVzZXIxQHRlc3QuY29tIiwiZXhwIjoxNzY2MjY0MDM4fQ.toQHI41wn97eMQzjhKYM4kqnGCLnfKKs6P7chykxmKQ
+@token = eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjIiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJ1c2VyMkB0ZXN0LmNvbSIsInN1YiI6InVzZXIyQHRlc3QuY29tIiwibmFtZSI6InVzZXIyQHRlc3QuY29tIiwianRpIjoiN2Y4OWY0ZDMtOWY4ZS00M2UzLTk3NTAtNzdhNjU4YTQ5YTc4IiwiZW1haWwiOiJ1c2VyMkB0ZXN0LmNvbSIsImV4cCI6MTc2NjQ2NDg4Nn0.cabZ2b0JtqQES0N_xH2icxPesHLrT6iv--Hb2v-Y1EA
 ###
 
 GET {{devServer}}/api/v1/auth/profile
@@ -83,3 +83,4 @@ Accept: application/json
 Authorization: Bearer {{token}}
 
 
+### curl -X GET https://localhost:7094/api/v1/auth/profile -H "accept: */*" -H "Authorization: Bearer eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJ1c2VyMUB0ZXN0LmNvbSIsInN1YiI6InVzZXIxQHRlc3QuY29tIiwibmFtZSI6InVzZXIxQHRlc3QuY29tIiwianRpIjoiMjlhMzlkMjgtYzg2OC00NGU0LWE2ZDMtODcyOTk1MjAxYTg4IiwiZW1haWwiOiJ1c2VyMUB0ZXN0LmNvbSIsImV4cCI6MTc2NjI2Njk2NH0.1SD3hk84OGFaE7miVhYBPPmcFH-KyHBoBAAAf0k6Z-M" --insecure

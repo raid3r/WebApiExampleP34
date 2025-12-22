@@ -55,10 +55,13 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
     [Authorize]
     public UserProfileDto Profile()
     {
+        //var userId = User.Claims.First(x => x.Type == JwtRegisteredClaimNames.NameId).Value;
+        var email = User.Claims.First(x => x.Type == ClaimTypes.Email).Value;
+        var id = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
         return new UserProfileDto
         {
-            Id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!),
-            Email = User.FindFirstValue(ClaimTypes.Email)!
+            Id = int.Parse(id),
+            Email = email
         };
     }
 
@@ -70,9 +73,10 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
 
         var claims = new List<Claim>
         {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
             new Claim(JwtRegisteredClaimNames.Name, user.Email!),
-            new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!)
         };

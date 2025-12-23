@@ -31,12 +31,35 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
            .ToListAsync();
     }
 
+    public async Task<IEnumerable<TodoListDto>> GetAllForUserAsync(int userId)
+    {
+        return await unitOfWork.TodoLists
+           .GetAll()
+           .Include(x => x.User)
+           .Where(x => x.User.Id == userId)
+           .Select(x => new TodoListDto
+           {
+               Id = x.Id,
+               Name = x.Name,
+               Items = x.Items.Select(item => new TodoItemDto
+               {
+                   Id = item.Id,
+                   Title = item.Title,
+                   Description = item.Description,
+                   IsCompleted = item.IsCompleted,
+                   Priority = item.Priority
+               }).ToList()
+           })
+           .ToListAsync();
+    }
 
-    public async Task CreateAsync(TodoListDto dto)
+
+    public async Task CreateAsync(TodoListDto dto, int userId)
     {
         var model = new TodoList
         {
             Name = dto.Name,
+            User = await unitOfWork.Users.GetAll().FirstAsync(x => x.Id == userId)
         };
         await unitOfWork.TodoLists.AddAsync(model);
         await unitOfWork.SaveChangesAsync();

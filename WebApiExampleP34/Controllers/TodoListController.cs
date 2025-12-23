@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 using WebApiExampleP34.Application.Services;
 using WebApiExampleP34.Models.DTO;
 
 namespace WebApiExampleP34.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/todo-list")]
 public class TodoListController(ITodoListService service) : ControllerBase
@@ -18,7 +21,8 @@ public class TodoListController(ITodoListService service) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<TodoListDto>), 200)]
     public async Task<IEnumerable<TodoListDto>> List()
     {
-        return await service.GetAllAsync();
+        var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+        return await service.GetAllForUserAsync(int.Parse(userId));
     }
 
     [HttpGet("{id}")]
@@ -33,6 +37,7 @@ public class TodoListController(ITodoListService service) : ControllerBase
     {
         try
         {
+            // TODO Проблема безпеки (користувач може отримати доступ до чужого списку)
             return await service.GetByIdAsync(id);
         }
         catch (Exception)
@@ -56,6 +61,7 @@ public class TodoListController(ITodoListService service) : ControllerBase
     {
         try
         {
+            // TODO Проблема безпеки (користувач може отримати доступ до чужого списку)
             await service.UpdateAsync(id, item);
             return OperationResult.Ok();
         } catch (InvalidDataException)
@@ -76,7 +82,8 @@ public class TodoListController(ITodoListService service) : ControllerBase
     [HttpPut("create")]
     public async Task<OperationResult> Create([FromBody] TodoListDto item)
     {
-        await service.CreateAsync(item);
+        var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+        await service.CreateAsync(item, int.Parse(userId));
         return OperationResult.Ok();
     }
 

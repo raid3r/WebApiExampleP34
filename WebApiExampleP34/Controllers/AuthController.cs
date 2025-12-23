@@ -55,7 +55,6 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
     [Authorize]
     public UserProfileDto Profile()
     {
-        //var userId = User.Claims.First(x => x.Type == JwtRegisteredClaimNames.NameId).Value;
         var email = User.Claims.First(x => x.Type == ClaimTypes.Email).Value;
         var id = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
         return new UserProfileDto
@@ -69,7 +68,6 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
     private string GenerateJwtToken(User user)
     {
         var key = Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]!);
-
 
         var claims = new List<Claim>
         {
@@ -93,32 +91,9 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
                 )
         );
 
-        //var descriptor = new SecurityTokenDescriptor
-        //{
-        //    Subject = new ClaimsIdentity(
-        //    [
-        //        new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
-        //        new Claim(JwtRegisteredClaimNames.Name, user.Email!),
-        //        new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
-        //        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        //        new Claim(JwtRegisteredClaimNames.Email, user.Email!)
-        //    ]),
-        //    Expires = DateTime.UtcNow.AddHours(12),
-        //    SigningCredentials = new SigningCredentials(
-        //        new SymmetricSecurityKey(key),
-        //        SecurityAlgorithms.HmacSha256Signature
-        //        )
-        //};
-
         var tokenHandler = new JwtSecurityTokenHandler();
-        //var token = tokenHandler.CreateToken(descriptor);
         return tokenHandler.WriteToken(token);
     }
-
-
-
-
-
 }
 
 

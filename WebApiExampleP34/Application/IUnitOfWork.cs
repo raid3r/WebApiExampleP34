@@ -8,4 +8,5 @@ public interface IUnitOfWork: IDisposable
 
     ITodoItemRepository TodoItems { get; }
     ITodoListRepository TodoLists { get; }
+    IUserRepository Users { get; }
 }

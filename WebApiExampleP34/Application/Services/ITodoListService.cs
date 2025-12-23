@@ -8,7 +8,9 @@ public interface ITodoListService
 {
     public Task<IEnumerable<TodoListDto>> GetAllAsync();
 
-    public Task CreateAsync(TodoListDto dto);
+    public Task<IEnumerable<TodoListDto>> GetAllForUserAsync(int userId);
+
+    public Task CreateAsync(TodoListDto dto, int userId);
 
     public Task<TodoListDto> GetByIdAsync(int id);
 

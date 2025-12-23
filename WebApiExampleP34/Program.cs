@@ -13,6 +13,7 @@ using WebApiExampleP34.Infrastructure;
 using WebApiExampleP34.Infrastructure.Services;
 using WebApiExampleP34.Models;
 using WebApiExampleP34.Models.DAL;
+using WebApiExampleP34.Models.DTO;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,7 +69,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ITodoItemService, TodoItemService>();
 builder.Services.AddScoped<ITodoListService, TodoListService>();
 
-var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);
+
 
 builder.Services.AddCors(options =>
 {
@@ -80,6 +81,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);
 builder.Services
     .AddAuthentication(options =>
 {
@@ -98,18 +100,22 @@ builder.Services
             ClockSkew = TimeSpan.FromMinutes(5)
         };
 
+        // прервірка токена
+        // якщо немає OnChallenge 
+        // якщо є але невірний чи прострочений токен  OnAuthenticationFailed - OnChallenge 
+
         options.Events = new JwtBearerEvents
         {
             OnChallenge = context =>
             {
+                // Подія виконується, коли токен відсутній або недійсний
                 context.HandleResponse();
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
-                return context.Response.WriteAsync(JsonSerializer.Serialize(new
-                {
-                    error = "Unauthorized",
-                    message = "Токен отсутствует или недействителен."
-                }));
+                return context.Response.WriteAsync(
+                    JsonSerializer.Serialize(
+                    OperationResult.Fail("Invalid token"))
+                    );
             },
             OnForbidden = context =>
             {
@@ -118,6 +124,7 @@ builder.Services
             },
             OnAuthenticationFailed = context =>
             {
+                // Подія виконується, коли автентифікація не вдалася
                 Console.WriteLine("JWT Auth failed: " + context.Exception.Message);
                 return Task.CompletedTask;
             },
@@ -135,9 +142,6 @@ builder.Services.AddIdentityCore<User>(options => {
     options.Password.RequireLowercase = false;
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 3;
-
-    
-
 })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<TodoListContext>()
@@ -154,6 +158,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseStaticFiles();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
@@ -163,15 +169,28 @@ app.MapControllers();
 
 app.UseCors("AllowAll");
 
+
+// Використання інших заголовків для авторизації
 app.Use(async (context, next) =>
 {
-    
     if (context.Request.Headers.TryGetValue("X-Auth-Token", out var token))
     {
         context.Request.Headers["Authorization"] = $"Bearer {token}";
     }
-
     await next();
 });
 
+app.MapFallbackToFile("index.html");
+
 app.Run();
+
+/*
+ * Якщо не авторизований користувач - показуємо форму входу
+ * Модно переключитися на форму реєстрації
+ * На формах показуємо помилки входу/реєстрації
+ * 
+ * Якщо зареєстрований користувач - показуємо профіль користувача та кнопку вийти
+ * 
+ * 
+ * 
+ */ 

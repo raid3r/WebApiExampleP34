@@ -1,21 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';          // Страница авторизации, которую мы сделали
-import TodoList from './pages/TodoList';    // Ваша основная страница с задачами
-import Register from './pages/Register';    // Опционально: регистрация
-import NotFound from './pages/NotFound';     // 404 страница
+import Login from './pages/Login';          // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+import TodoList from './pages/TodoList';    // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+import Register from './pages/Register';    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+import NotFound from './pages/NotFound';     // 404 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-// Простой хук для проверки авторизации (по токену в localStorage)
+
 function useAuth() {
     return !!localStorage.getItem('token');
 }
 
-// Защищённый маршрут — только для авторизованных пользователей
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 function ProtectedRoute({ children }) {
     const isAuthenticated = useAuth();
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-// Публичный маршрут — перенаправляет авторизованных на главную
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 function PublicRoute({ children }) {
     const isAuthenticated = useAuth();
     return isAuthenticated ? <Navigate to="/" replace /> : children;
@@ -26,7 +26,7 @@ function App() {
         <BrowserRouter>
             <div className="App">
                 <Routes>
-                    {/* Главная страница — список задач (защищена) */}
+                    {/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) */}
                     <Route
                         path="/"
                         element={
@@ -36,7 +36,7 @@ function App() {
                         }
                     />
 
-                    {/* Страница входа */}
+                    {/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ */}
                     <Route
                         path="/login"
                         element={
@@ -46,7 +46,7 @@ function App() {
                         }
                     />
 
-                    {/* Регистрация (опционально) */}
+                    {/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) */}
                     <Route
                         path="/register"
                         element={
@@ -56,7 +56,7 @@ function App() {
                         }
                     />
 
-                    {/* 404 — страница не найдена */}
+                    {/* 404 пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */}
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>

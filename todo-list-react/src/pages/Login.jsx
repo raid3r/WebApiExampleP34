@@ -18,6 +18,7 @@ const Login = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    //'Authorization': 'Bearer ' + localStorage.getItem('token')
                 },
                 body: JSON.stringify({
                     login: email,
@@ -46,6 +47,7 @@ const Login = () => {
     return (
         <div className="login-container">
             <div className="login-card">
+                <h1>Welcome Back to TODO List</h1>
                 <h2>Sign In</h2>
                 <p className="subtitle">Enter your credentials to access your account</p>
 
@@ -78,9 +80,12 @@ const Login = () => {
                         />
                     </div>
 
-                    <button type="submit" disabled={loading} className="login-btn">
-                        {loading ? 'Signing in...' : 'Sign In'}
-                    </button>
+                    <div>
+                        <button type="submit" disabled={loading} className="login-btn">
+                            {loading ? 'Signing in...' : 'Sign In'}
+                        </button>
+                    </div>
+
                 </form>
 
                 <div className="footer-links">

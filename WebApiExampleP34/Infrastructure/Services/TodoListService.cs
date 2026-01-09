@@ -54,7 +54,7 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
     }
 
 
-    public async Task CreateAsync(TodoListDto dto, int userId)
+    public async Task<TodoListDto> CreateAsync(TodoListDto dto, int userId)
     {
         var model = new TodoList
         {
@@ -63,6 +63,12 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
         };
         await unitOfWork.TodoLists.AddAsync(model);
         await unitOfWork.SaveChangesAsync();
+        return new TodoListDto
+        {
+            Id = model.Id,
+            Name = model.Name,
+            Items = new List<TodoItemDto>()
+        };
     }
 
     public async Task<TodoListDto> GetByIdAsync(int id)
@@ -87,13 +93,26 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
         return item;
     }
 
-    public async Task UpdateAsync(int id, TodoListDto dto)
+    public async Task<TodoListDto> UpdateAsync(int id, TodoListDto dto)
     {
         var item = await unitOfWork.TodoLists.GetAll().FirstAsync(x => x.Id == id);
         item.Name = dto.Name;
 
         await unitOfWork.TodoLists.UpdateAsync(item);
         await unitOfWork.SaveChangesAsync();
+        return new TodoListDto
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Items = item.Items.Select(i => new TodoItemDto
+            {
+                Id = i.Id,
+                Title = i.Title,
+                Description = i.Description,
+                IsCompleted = i.IsCompleted,
+                Priority = i.Priority
+            }).ToList()
+        };
     }
 
     public async Task DeleteByIdAsync(int id)
@@ -103,7 +122,7 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
         await unitOfWork.SaveChangesAsync();
     }
 
-    public async Task AddItemToListAsync(int listId, TodoItemDto itemDto)
+    public async Task<TodoItemDto> AddItemToListAsync(int listId, TodoItemDto itemDto)
     {
         var list = await unitOfWork.TodoLists.GetAll()
             .Include(x => x.Items)
@@ -117,6 +136,14 @@ public class TodoListService(IUnitOfWork unitOfWork) : ITodoListService
         };
         list.Items.Add(todoItem);
         await unitOfWork.SaveChangesAsync();
+        return new TodoItemDto
+        {
+            Id = todoItem.Id,
+            Title = todoItem.Title,
+            Description = todoItem.Description,
+            IsCompleted = todoItem.IsCompleted,
+            Priority = todoItem.Priority
+        };
     }
 
     public async Task<IEnumerable<TodoItemDto>> SearchItemsInListAsync(int listId, TodoItemSearchDto search)

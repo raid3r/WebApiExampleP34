@@ -51,18 +51,17 @@ public class TodoController(ITodoItemService service) : ControllerBase
         OperationId = "UpdateTodoById",
         Tags = new[] { "Todo Operations" }
     )]
-    [ProducesResponseType(typeof(OperationResult), 200)]
-    [ProducesResponseType(typeof(OperationResult), StatusCodes.Status404NotFound)]
-    public async Task<OperationResult> UpdateById(int id, [SwaggerRequestBody("Todo item content")][FromBody] TodoItemDto item)
+    [ProducesResponseType(typeof(OperationResult<TodoItemDto>), 200)]
+    [ProducesResponseType(typeof(OperationResult<TodoItemDto>), StatusCodes.Status404NotFound)]
+    public async Task<OperationResult<TodoItemDto>> UpdateById(int id, [SwaggerRequestBody("Todo item content")][FromBody] TodoItemDto item)
     {
         try
         {
-            await service.UpdateAsync(id, item);
-            return OperationResult.Ok();
+            return OperationResult<TodoItemDto>.Ok(await service.UpdateAsync(id, item));
         } catch (InvalidDataException)
         {
             Response.StatusCode = 404;
-            return OperationResult.Fail("Item not found.");
+            return OperationResult<TodoItemDto>.Fail("Item not found.");
         }
     }
 
@@ -75,10 +74,9 @@ public class TodoController(ITodoItemService service) : ControllerBase
         Tags = new[] { "Todo Operations" }
     )]
     [HttpPut("create")]
-    public async Task<OperationResult> Create([FromBody] TodoItemDto item)
+    public async Task<OperationResult<TodoItemDto>> Create([FromBody] TodoItemDto item)
     {
-        await service.CreateAsync(item);
-        return OperationResult.Ok();
+        return OperationResult<TodoItemDto>.Ok(await service.CreateAsync(item));
     }
 
     /// <summary>
@@ -88,22 +86,22 @@ public class TodoController(ITodoItemService service) : ControllerBase
     /// <responses code="200"></responses>
     /// <returns></returns>
     [HttpDelete("{id}")]
-    [ProducesResponseType(typeof(OperationResult), 200)]
-    [ProducesResponseType(typeof(OperationResult), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(OperationResult<TodoItemDto>), 200)]
+    [ProducesResponseType(typeof(OperationResult<TodoItemDto>), StatusCodes.Status404NotFound)]
     [SwaggerOperation(
         Tags = new[] { "Todo Operations" }
     )]
-    public async Task<OperationResult> DeleteById(int id)
+    public async Task<OperationResult<TodoItemDto>> DeleteById(int id)
     {
         try
         {
             await service.DeleteByIdAsync(id);
-            return OperationResult.Ok();
+            return OperationResult<TodoItemDto>.Ok(null);
         }
         catch (Exception)
         {
             Response.StatusCode = 404;
-            return OperationResult.Fail("Item not found.");
+            return OperationResult<TodoItemDto>.Fail("Item not found.");
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace WebApiExampleP34.Models.DTO;
 
-public class AuthResultDto: OperationResult
+public class AuthResultDto: OperationResult<object>
 {
     public string? Token { get; set; }
 

@@ -26,7 +26,7 @@ public class TodoItemService(IUnitOfWork unitOfWork) : ITodoItemService
     }
 
 
-    public async Task CreateAsync(TodoItemDto dto)
+    public async Task<TodoItemDto> CreateAsync(TodoItemDto dto)
     {
         var todoItem = new TodoItem
         {
@@ -37,6 +37,15 @@ public class TodoItemService(IUnitOfWork unitOfWork) : ITodoItemService
         };
         await unitOfWork.TodoItems.AddAsync(todoItem);
         await unitOfWork.SaveChangesAsync();
+
+        return new TodoItemDto
+        {
+            Id = todoItem.Id,
+            Title = todoItem.Title,
+            Description = todoItem.Description,
+            IsCompleted = todoItem.IsCompleted,
+            Priority = todoItem.Priority
+        };
     }
 
     public async Task<TodoItemDto> GetByIdAsync(int id)
@@ -54,7 +63,7 @@ public class TodoItemService(IUnitOfWork unitOfWork) : ITodoItemService
         return item;
     }
 
-    public async Task UpdateAsync(int id, TodoItemDto dto)
+    public async Task<TodoItemDto> UpdateAsync(int id, TodoItemDto dto)
     {
         var item = await unitOfWork.TodoItems.GetAll().FirstAsync(x => x.Id == id);
         item.Title = dto.Title;
@@ -64,6 +73,15 @@ public class TodoItemService(IUnitOfWork unitOfWork) : ITodoItemService
 
         await unitOfWork.TodoItems.UpdateAsync(item);
         await unitOfWork.SaveChangesAsync();
+
+        return new TodoItemDto
+        {
+            Id = item.Id,
+            Title = item.Title,
+            Description = item.Description,
+            IsCompleted = item.IsCompleted,
+            Priority = item.Priority
+        };
     }
 
     public async Task DeleteByIdAsync(int id)

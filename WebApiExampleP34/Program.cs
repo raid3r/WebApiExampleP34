@@ -114,7 +114,7 @@ builder.Services
                 context.Response.ContentType = "application/json";
                 return context.Response.WriteAsync(
                     JsonSerializer.Serialize(
-                    OperationResult.Fail("Invalid token"))
+                    OperationResult<object>.Fail("Invalid token"))
                     );
             },
             OnForbidden = context =>

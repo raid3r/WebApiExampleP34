@@ -12,7 +12,7 @@ public class OperationResult<T> where T: class
 
     public T? Data { get; set; }
 
-    public static OperationResult<T> Ok(T? data)
+    public static OperationResult<T> Ok(T? data = null)
     {
         return new OperationResult<T> { Success = true, Data = data };
     }

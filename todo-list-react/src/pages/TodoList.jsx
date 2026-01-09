@@ -38,6 +38,12 @@ const styles = {
         fontSize: 20,
         color: '#111827',
     },
+    headerRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
     table: {
         width: '100%',
         borderCollapse: 'collapse',
@@ -126,6 +132,19 @@ const styles = {
         background: '#93c5fd',
         cursor: 'not-allowed',
     },
+    deleteButton: {
+        padding: '8px 12px',
+        borderRadius: 6,
+        border: 'none',
+        background: '#ef4444',
+        color: '#fff',
+        cursor: 'pointer',
+        fontSize: 14,
+    },
+    deleteButtonDisabled: {
+        background: '#fca5a5',
+        cursor: 'not-allowed',
+    },
     smallNote: {
         fontSize: 12,
         color: '#6b7280',
@@ -153,6 +172,10 @@ const TodoList = () => {
 
     // Состояние форм добавления задач: { [listId]: { title, description, priority, isCompleted, saving } }
     const [forms, setForms] = useState({});
+
+    // Новое состояние для создания списка
+    const [newListName, setNewListName] = useState('');
+    const [creatingList, setCreatingList] = useState(false);
 
     // Инициализация пустых форм при загрузке данных
     useEffect(() => {
@@ -217,6 +240,143 @@ const TodoList = () => {
 
     // Проверка временного id
     const isTempId = (id) => typeof id === 'string' && id.startsWith('tmp-');
+
+    // Создание нового списка (оптимистично)
+    const handleCreateList = async (e) => {
+        e.preventDefault();
+        const name = (newListName || '').trim();
+        if (!name || creatingList) return;
+
+        setCreatingList(true);
+        const tempId = `tmp-list-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        const tempList = { id: tempId, name, items: [] };
+
+        // Оптимистично добавляем список в UI и инициализируем форму
+        setLists((prev) => [...prev, tempList]);
+        setForms((prev) => ({
+            ...prev,
+            [tempId]: {
+                title: '',
+                description: '',
+                priority: 2,
+                isCompleted: false,
+                saving: false,
+            },
+            ...prev,
+        }));
+
+        try {
+            const response = await fetch('/api/v1/todo-list/create', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                },
+                body: JSON.stringify({ name }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const created = result && result.data ? result.data : null;
+                if (created && created.id) {
+                    // Заменяем временный список на серверный
+                    setLists((prev) =>
+                        prev.map((l) => (l.id === tempId ? { ...created, items: Array.isArray(created.items) ? created.items : [] } : l))
+                    );
+                    // Переносим форму с tempId на created.id
+                    setForms((prev) => {
+                        const copied = { ...prev };
+                        if (copied[tempId]) {
+                            const tempForm = copied[tempId];
+                            delete copied[tempId];
+                            copied[created.id] = tempForm;
+                        } else {
+                            copied[created.id] = {
+                                title: '',
+                                description: '',
+                                priority: 2,
+                                isCompleted: false,
+                                saving: false,
+                            };
+                        }
+                        return copied;
+                    });
+                } else {
+                    console.warn('Server did not return created list object');
+                    // Оставляем временный список, т.к. сервер мог принять, но не вернуть объект
+                }
+            } else {
+                console.warn('Failed to create list, status', response.status);
+                // Удаляем временный список
+                setLists((prev) => prev.filter((l) => l.id !== tempId));
+                setForms((prev) => {
+                    const copied = { ...prev };
+                    delete copied[tempId];
+                    return copied;
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            // Откат при ошибке
+            setLists((prev) => prev.filter((l) => l.id !== tempId));
+            setForms((prev) => {
+                const copied = { ...prev };
+                delete copied[tempId];
+                return copied;
+            });
+        } finally {
+            setCreatingList(false);
+            setNewListName('');
+        }
+    };
+
+    // Удаление списка (оптимистично)
+    const handleDeleteList = async (listId) => {
+        const list = lists.find((l) => l.id === listId);
+        if (!list) return;
+
+        // Если временный список — просто удалить локально
+        if (isTempId(listId)) {
+            setLists((prev) => prev.filter((l) => l.id !== listId));
+            setForms((prev) => {
+                const copied = { ...prev };
+                delete copied[listId];
+                return copied;
+            });
+            return;
+        }
+
+        // Пометить список как удаляющийся
+        setLists((prev) => prev.map((l) => (l.id === listId ? { ...l, _deleting: true } : l)));
+
+        try {
+            const response = await fetch(`/api/v1/todo-list/${listId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                },
+            });
+
+            if (response.ok) {
+                // Успешно — удалить из списка и форму
+                setLists((prev) => prev.filter((l) => l.id !== listId));
+                setForms((prev) => {
+                    const copied = { ...prev };
+                    delete copied[listId];
+                    return copied;
+                });
+            } else {
+                console.warn('Failed to delete list, status', response.status);
+                // Снять флаг удаления
+                setLists((prev) => prev.map((l) => (l.id === listId ? { ...l, _deleting: false } : l)));
+            }
+        } catch (err) {
+            console.error(err);
+            // Снять флаг удаления при ошибке
+            setLists((prev) => prev.map((l) => (l.id === listId ? { ...l, _deleting: false } : l)));
+        }
+    };
 
     // Переключение completed с оптимистичным обновлением и сохранением на сервере
     const handleToggleCompleted = async (listId, itemId) => {
@@ -318,6 +478,75 @@ const TodoList = () => {
                         : {
                               ...l,
                               items: l.items.map((it) => (it.id === itemId ? { ...it, isCompleted: prevValue, _saving: false } : it)),
+                          }
+                )
+            );
+        }
+    };
+
+    // Удаление задачи (оптимистично: помечаем _deleting, затем удаляем; для временных id просто удаляем локально)
+    const handleDeleteItem = async (listId, itemId) => {
+        const list = lists.find((l) => l.id === listId);
+        if (!list || !Array.isArray(list.items)) return;
+
+        // Если временный элемент — просто удалить локально
+        if (isTempId(itemId)) {
+            setLists((prev) =>
+                prev.map((l) => (l.id !== listId ? l : { ...l, items: l.items.filter((it) => it.id !== itemId) }))
+            );
+            return;
+        }
+
+        // Помечаем элемент как удаляющийся
+        setLists((prev) =>
+            prev.map((l) =>
+                l.id !== listId
+                    ? l
+                    : {
+                          ...l,
+                          items: l.items.map((it) => (it.id === itemId ? { ...it, _deleting: true } : it)),
+                      }
+            )
+        );
+
+        try {
+            const response = await fetch(`/api/v1/todo/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                },
+            });
+
+            if (response.ok) {
+                // Успешно — удалить из списка
+                setLists((prev) =>
+                    prev.map((l) => (l.id !== listId ? l : { ...l, items: l.items.filter((it) => it.id !== itemId) }))
+                );
+            } else {
+                console.warn('Failed to delete item, status', response.status);
+                // Снять флаг удаления
+                setLists((prev) =>
+                    prev.map((l) =>
+                        l.id !== listId
+                            ? l
+                            : {
+                                  ...l,
+                                  items: l.items.map((it) => (it.id === itemId ? { ...it, _deleting: false } : it)),
+                              }
+                    )
+                );
+            }
+        } catch (err) {
+            console.error(err);
+            // Снять флаг удаления при ошибке
+            setLists((prev) =>
+                prev.map((l) =>
+                    l.id !== listId
+                        ? l
+                        : {
+                              ...l,
+                              items: l.items.map((it) => (it.id === itemId ? { ...it, _deleting: false } : it)),
                           }
                 )
             );
@@ -435,6 +664,34 @@ const TodoList = () => {
     if (!lists || lists.length === 0) {
         return (
             <div style={styles.container}>
+                {/* Форма создания списка при пустом состоянии */}
+                <form
+                    onSubmit={handleCreateList}
+                    style={{ marginBottom: 12 }}
+                    aria-label="Создать новый список"
+                >
+                    <div style={styles.formRow}>
+                        <input
+                            type="text"
+                            placeholder="Название списка *"
+                            value={newListName}
+                            onChange={(e) => setNewListName(e.target.value)}
+                            style={styles.input}
+                            required
+                        />
+                        <button
+                            type="submit"
+                            style={{
+                                ...styles.button,
+                                ...(creatingList ? styles.buttonDisabled : {}),
+                            }}
+                            disabled={!newListName.trim() || creatingList}
+                        >
+                            {creatingList ? 'Создание...' : 'Создать список'}
+                        </button>
+                    </div>
+                </form>
+
                 <div style={styles.empty}>Нет доступных todo-списков.</div>
             </div>
         );
@@ -445,7 +702,23 @@ const TodoList = () => {
         <div style={styles.container}>
             {lists.map((list) => (
                 <section key={list.id} style={styles.listCard}>
-                    <h2 style={styles.title}>{list.name}</h2>
+                    <div style={styles.headerRow}>
+                        <h2 style={styles.title}>{list.name}</h2>
+                        <button
+                            type="button"
+                            onClick={() => handleDeleteList(list.id)}
+                            style={{
+                                ...styles.deleteButton,
+                                ...(list._deleting ? styles.deleteButtonDisabled : {}),
+                            }}
+                            disabled={!!list._deleting}
+                            aria-disabled={!!list._deleting}
+                            aria-label={`Удалить список "${list.name}"`}
+                        >
+                            {list._deleting ? 'Удаляется...' : 'Удалить список'}
+                        </button>
+                    </div>
+
                     <table style={styles.table}>
                         <thead>
                             <tr>
@@ -453,6 +726,7 @@ const TodoList = () => {
                                 <th style={styles.th}>Описание</th>
                                 <th style={styles.th}>Приоритет</th>
                                 <th style={styles.th}>Выполнено</th>
+                                <th style={styles.th}>Действия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -493,12 +767,27 @@ const TodoList = () => {
                                             >
                                                 {item._saving ? 'Сохраняется...' : (item.isCompleted ? 'Да' : 'Нет')}
                                             </td>
+                                            <td style={styles.td}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteItem(list.id, item.id)}
+                                                    style={{
+                                                        ...styles.deleteButton,
+                                                        ...(item._deleting ? styles.deleteButtonDisabled : {}),
+                                                    }}
+                                                    disabled={!!item._deleting}
+                                                    aria-disabled={!!item._deleting}
+                                                    aria-label={`Удалить задачу "${item.title}"`}
+                                                >
+                                                    {item._deleting ? 'Удаляется...' : 'Удалить'}
+                                                </button>
+                                            </td>
                                         </tr>
                                     );
                                 })
                             ) : (
                                 <tr>
-                                    <td style={styles.td} colSpan={4}>
+                                    <td style={styles.td} colSpan={5}>
                                         Список пуст.
                                     </td>
                                 </tr>
@@ -562,7 +851,39 @@ const TodoList = () => {
                     </form>
                 </section>
             ))}
+
+
+            {/* Форма создания нового списка */}
+            <form
+                onSubmit={handleCreateList}
+                style={{ marginBottom: 12 }}
+                aria-label="Создать новый список"
+            >
+                <div style={styles.formRow}>
+                    <input
+                        type="text"
+                        placeholder="Название списка *"
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                        style={styles.input}
+                        required
+                    />
+                    <button
+                        type="submit"
+                        style={{
+                            ...styles.button,
+                            ...(creatingList ? styles.buttonDisabled : {}),
+                        }}
+                        disabled={!newListName.trim() || creatingList}
+                    >
+                        {creatingList ? 'Создание...' : 'Создать список'}
+                    </button>
+                </div>
+            </form>
+
+
         </div>
+
     );
 };
 

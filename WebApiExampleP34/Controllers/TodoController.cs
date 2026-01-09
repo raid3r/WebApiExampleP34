@@ -86,22 +86,22 @@ public class TodoController(ITodoItemService service) : ControllerBase
     /// <responses code="200"></responses>
     /// <returns></returns>
     [HttpDelete("{id}")]
-    [ProducesResponseType(typeof(OperationResult<TodoItemDto>), 200)]
-    [ProducesResponseType(typeof(OperationResult<TodoItemDto>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(OperationResult<object>), 200)]
+    [ProducesResponseType(typeof(OperationResult<object>), StatusCodes.Status404NotFound)]
     [SwaggerOperation(
         Tags = new[] { "Todo Operations" }
     )]
-    public async Task<OperationResult<TodoItemDto>> DeleteById(int id)
+    public async Task<OperationResult<object>> DeleteById(int id)
     {
         try
         {
             await service.DeleteByIdAsync(id);
-            return OperationResult<TodoItemDto>.Ok(null);
+            return OperationResult<object>.Ok();
         }
         catch (Exception)
         {
             Response.StatusCode = 404;
-            return OperationResult<TodoItemDto>.Fail("Item not found.");
+            return OperationResult<object>.Fail("Item not found.");
         }
     }
 }

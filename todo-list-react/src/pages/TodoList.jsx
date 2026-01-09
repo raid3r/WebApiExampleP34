@@ -215,6 +215,115 @@ const TodoList = () => {
         }));
     };
 
+    // Проверка временного id
+    const isTempId = (id) => typeof id === 'string' && id.startsWith('tmp-');
+
+    // Переключение completed с оптимистичным обновлением и сохранением на сервере
+    const handleToggleCompleted = async (listId, itemId) => {
+        // Найти текущие значения
+        const list = lists.find((l) => l.id === listId);
+        if (!list || !Array.isArray(list.items)) return;
+
+        const item = list.items.find((it) => it.id === itemId);
+        if (!item) return;
+
+        // Для временных элементов просто переключаем локально
+        if (isTempId(itemId)) {
+            setLists((prev) =>
+                prev.map((l) =>
+                    l.id !== listId
+                        ? l
+                        : {
+                              ...l,
+                              items: l.items.map((it) => (it.id === itemId ? { ...it, isCompleted: !it.isCompleted } : it)),
+                          }
+                )
+            );
+            return;
+        }
+
+        const prevValue = !!item.isCompleted;
+        const newValue = !prevValue;
+
+        item.isCompleted = newValue
+
+        // Оптимистично помечаем _saving и переключаем значение
+        setLists((prev) =>
+            prev.map((l) =>
+                l.id !== listId
+                    ? l
+                    : {
+                          ...l,
+                          items: l.items.map((it) =>
+                              it.id === itemId ? { ...it, isCompleted: newValue, _saving: true } : it
+                          ),
+                      }
+            )
+        );
+
+        try {
+            const response = await fetch(`/api/v1/todo/${itemId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                },
+                body: JSON.stringify(item),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const serverItem = result && result.data ? result.data : null;
+
+                setLists((prev) =>
+                    prev.map((l) =>
+                        l.id !== listId
+                            ? l
+                            : {
+                                  ...l,
+                                  items: l.items.map((it) => {
+                                      if (it.id !== itemId) return it;
+                                      if (serverItem && serverItem.id) {
+                                          // Заменяем на серверную версию
+                                          return { ...serverItem, _saving: false };
+                                      }
+                                      // Сервер не вернул объект — убрать _saving и оставить isCompleted
+                                      const { _saving, ...rest } = { ...it, _saving: false };
+                                      return rest;
+                                  }),
+                              }
+                    )
+                );
+            } else {
+                console.warn('Failed to update item, status', response.status);
+                // Откатить значение
+                setLists((prev) =>
+                    prev.map((l) =>
+                        l.id !== listId
+                            ? l
+                            : {
+                                  ...l,
+                                  items: l.items.map((it) => (it.id === itemId ? { ...it, isCompleted: prevValue, _saving: false } : it)),
+                              }
+                    )
+                );
+            }
+        } catch (err) {
+            console.error(err);
+            // Откатить при ошибке
+            setLists((prev) =>
+                prev.map((l) =>
+                    l.id !== listId
+                        ? l
+                        : {
+                              ...l,
+                              items: l.items.map((it) => (it.id === itemId ? { ...it, isCompleted: prevValue, _saving: false } : it)),
+                          }
+                )
+            );
+        }
+    };
+
     // Добавление задачи (оптимистично)
     const handleAddItem = async (e, listId) => {
         e.preventDefault();
@@ -368,7 +477,22 @@ const TodoList = () => {
                                                     {p.text}
                                                 </span>
                                             </td>
-                                            <td style={styles.td}>{item.isCompleted ? 'Да' : 'Нет'}</td>
+                                            <td
+                                                style={{ ...styles.td, cursor: 'pointer', userSelect: 'none' }}
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => handleToggleCompleted(list.id, item.id)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        handleToggleCompleted(list.id, item.id);
+                                                    }
+                                                }}
+                                                aria-pressed={!!item.isCompleted}
+                                                aria-label={`Отметить задачу "${item.title}" как ${item.isCompleted ? 'не выполненную' : 'выполненную'}`}
+                                            >
+                                                {item._saving ? 'Сохраняется...' : (item.isCompleted ? 'Да' : 'Нет')}
+                                            </td>
                                         </tr>
                                     );
                                 })
